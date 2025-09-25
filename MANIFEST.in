@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include scrape_and_summarize *.py
+global-exclude *.pyc
+global-exclude __pycache__
