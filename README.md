@@ -129,8 +129,6 @@ scraper = scrape_and_summarize(
 )
 ```
 
-## ⚡ Quick Start
-
 ## 📚 Usage Guide
 
 ### Basic Usage
