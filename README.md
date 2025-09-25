@@ -572,7 +572,7 @@ The library includes comprehensive error handling:
 
 ## 🛠️ Development
 
-For detailed development documentation, see [DEVELOPMENT.md](DEVELOPMENT.md).
+For detailed development documentation, see [DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 ### Quick Development Setup
 
@@ -636,7 +636,7 @@ ScraperSage/
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 ### Quick Contributing Guide
 
@@ -699,8 +699,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support & Resources
 
 - **Documentation**: [Full documentation](docs/)
-- **Examples**: [Usage examples](EXAMPLES.md)
-- **API Reference**: [Detailed API docs](API_REFERENCE.md)
+- **Examples**: [Usage examples](docs/EXAMPLES.md)
+- **API Reference**: [Detailed API docs](docs/API_REFERENCE.md)
 - **Issues**: [GitHub Issues](https://github.com/akillabs/ScraperSage/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/akillabs/ScraperSage/discussions)
 
