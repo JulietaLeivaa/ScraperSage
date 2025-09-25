@@ -14,12 +14,23 @@ A comprehensive web scraping and content summarization library that combines Goo
 
 ## Installation
 
+### From PyPI (Recommended)
+
+Install the latest stable version from PyPI:
+
+```bash
+pip install ScraperSage
+```
+
 ### From Source (Development)
 
-1. Clone or download this repository
-2. Navigate to the project directory
-3. Install the package in development mode:
+1. Clone this repository:
+```bash
+git clone https://github.com/akillabs/ScraperSage.git
+cd ScraperSage
+```
 
+2. Install the package in development mode:
 ```bash
 pip install -e .
 ```
