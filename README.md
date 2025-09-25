@@ -44,25 +44,6 @@ Install the latest stable version from PyPI:
 pip install ScraperSage
 ```
 
-### From Source (Development)
-
-1. Clone this repository:
-```bash
-git clone https://github.com/akillabs/ScraperSage.git
-cd ScraperSage
-```
-
-2. Install the package in development mode:
-```bash
-pip install -e .
-```
-
-### Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
 ### Install Playwright Browsers (Required)
 
 After installation, you must install the Playwright browsers:
