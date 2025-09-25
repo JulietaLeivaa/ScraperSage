@@ -715,6 +715,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by the AkilLabs team**
+**Made with ❤️ by the AkilLabs**
 
 *Star ⭐ this repo if you find it helpful!*
