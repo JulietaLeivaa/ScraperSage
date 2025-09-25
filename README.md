@@ -54,21 +54,6 @@ playwright install chromium
 
 > **Note**: This step is crucial for web scraping functionality. The library uses Chromium for JavaScript-enabled scraping.
 
-### Alternative Installation Methods
-
-#### From GitHub (Development Version)
-```bash
-pip install git+https://github.com/akillabs/ScraperSage.git
-```
-
-#### For Development
-```bash
-git clone https://github.com/akillabs/ScraperSage.git
-cd ScraperSage
-pip install -e .
-playwright install chromium
-```
-
 ## 🔑 API Keys Setup
 
 You need two API keys to use this library:
