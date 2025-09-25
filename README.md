@@ -4,7 +4,7 @@ A comprehensive web scraping and content summarization library that combines Goo
 
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![PyPI Version](https://img.shields.io/badge/PyPI-Coming%20Soon-orange.svg)](#installation)
+[![PyPI Version](https://img.shields.io/pypi/v/ScraperSage.svg)](https://pypi.org/project/ScraperSage/)
 
 ## 🚀 Features
 
@@ -38,7 +38,7 @@ A comprehensive web scraping and content summarization library that combines Goo
 
 ### From PyPI (Recommended)
 
-Install the latest stable version from PyPI:
+ScraperSage is now available on PyPI! Install the latest version:
 
 ```bash
 pip install ScraperSage
@@ -54,33 +54,22 @@ playwright install chromium
 
 > **Note**: This step is crucial for web scraping functionality. The library uses Chromium for JavaScript-enabled scraping.
 
-## 🔑 API Keys Setup
+### Alternative Installation Methods
 
-```python
-import os
-import json
-from ScraperSage import scrape_and_summarize
-
-# Set your API keys
-os.environ["SERPER_API_KEY"] = "your_serper_api_key"
-os.environ["GEMINI_API_KEY"] = "your_gemini_api_key"
-
-# Initialize scrape_and_summarize
-scraper = scrape_and_summarize()
-
-# Define search parameters
-params = {
-    "query": "AI in healthcare",
-    "max_results": 5,
-    "save_to_file": False
-}
-
-# Run the scraper
-result = scraper.run(params)
-
-# Print results
-print(json.dumps(result, indent=2))
+#### From GitHub (Development Version)
+```bash
+pip install git+https://github.com/akillabs/ScraperSage.git
 ```
+
+#### For Development
+```bash
+git clone https://github.com/akillabs/ScraperSage.git
+cd ScraperSage
+pip install -e .
+playwright install chromium
+```
+
+## 🔑 API Keys Setup
 
 You need two API keys to use this library:
 
@@ -695,8 +684,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔄 Changelog
 
-### v1.0.0 (Current)
-- ✅ Initial release
+### v1.0.5 (Latest - Available on PyPI)
+- ✅ Published to PyPI: `pip install ScraperSage`
+- ✅ Improved package metadata and dependencies
+- ✅ Enhanced documentation and examples
+- ✅ Bug fixes and stability improvements
+
+### v1.0.0 (Initial Release)
 - ✅ Multi-engine search support (Google + DuckDuckGo)
 - ✅ Playwright-based web scraping with JavaScript support
 - ✅ Google Gemini AI summarization
@@ -718,3 +712,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Made with ❤️ by the AkilLabs**
 
 *Star ⭐ this repo if you find it helpful!*
+
+**📦 Available on PyPI**: [https://pypi.org/project/ScraperSage/](https://pypi.org/project/ScraperSage/)
