@@ -1,321 +1,339 @@
 """
-scrape_and_summarize - A comprehensive web scraping and content summarization class.
+ScraperSage - Main scraper class with explicit AI provider and model requirement.
 """
 
 import os
-import requests
-from ddgs import DDGS
-from playwright.sync_api import sync_playwright
-import google.generativeai as genai
-from bs4 import BeautifulSoup
-from typing import List, Optional, Dict, Any
-import time
 import json
-from tenacity import retry, stop_after_attempt, wait_exponential
+import time
+import requests
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Any, Optional
+from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
+from ddgs import DDGS  # Changed from duckduckgo_search to ddgs
+from tenacity import retry, stop_after_attempt, wait_exponential
+
+from .ai_providers import create_ai_provider, get_supported_providers, get_available_models
 
 
 class scrape_and_summarize:
-    """
-    A comprehensive web scraping and content summarization class that combines
-    Google/DuckDuckGo search with web scraping and AI-powered summarization.
-    """
+    """Main scraper class with explicit AI provider and model requirement."""
     
-    def __init__(self, serper_api_key: str = None, gemini_api_key: str = None):
+    def __init__(self, serper_api_key: str = None, provider: str = None, 
+                 model: str = None, provider_api_key: str = None):
         """
-        Initialize scrape_and_summarize with API keys.
+        Initialize the scraper with explicit AI provider and model.
         
         Args:
-            serper_api_key (str): API key for Serper (Google Search)
-            gemini_api_key (str): API key for Google Gemini AI
+            serper_api_key: API key for Serper (Google search)
+            provider: AI provider name (gemini, openai, openrouter, deepseek) - REQUIRED
+            model: Specific model to use - REQUIRED
+            provider_api_key: API key for the AI provider (optional, uses env vars)
         """
+        # Set up search API
         self.serper_api_key = serper_api_key or os.getenv("SERPER_API_KEY")
-        self.gemini_api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
+        if not self.serper_api_key:
+            raise ValueError("SERPER_API_KEY is required. Set it as environment variable or pass explicitly.")
         
-        # Validate API keys are present
-        if not self.serper_api_key or not self.gemini_api_key:
-            raise ValueError("Missing required API keys. Please provide SERPER_API_KEY and GEMINI_API_KEY.")
+        # Validate provider is specified
+        if not provider:
+            raise ValueError(f"Provider is required. Please specify one of: {get_supported_providers()}")
         
-        # Configure Gemini AI
-        genai.configure(api_key=self.gemini_api_key)
-        self.model = genai.GenerativeModel("gemini-2.0-flash")
-    
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _search_google(self, query: str, max_results: int = 5) -> List[str]:
-        """Search Google using Serper API with retry mechanism."""
-        url = "https://google.serper.dev/search"
-        headers = {"X-API-KEY": self.serper_api_key, "Content-Type": "application/json"}
-        payload = {"q": query}
-
+        # Validate model is specified
+        if not model:
+            raise ValueError(f"Model is required for {provider}. Please specify a model for {provider} provider.")
+        
+        # Validate and set up AI provider
+        if provider not in get_supported_providers():
+            raise ValueError(f"Unsupported provider: {provider}. Available: {get_supported_providers()}")
+        
+        self.provider_name = provider
+        self.model_name = model
+        
+        # Create AI provider instance
         try:
-            response = requests.post(url, json=payload, headers=headers)
-            response.raise_for_status()
-            results = response.json()
-            return [result["link"] for result in results.get("organic", [])][:max_results]
-        except requests.exceptions.RequestException as e:
-            return []
-
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _search_duckduckgo(self, query: str, max_results: int = 5) -> List[str]:
-        """Search DuckDuckGo with retry mechanism."""
-        try:
-            with DDGS() as ddgs:
-                return [result["href"] for result in ddgs.text(query, max_results=max_results)]
+            self.ai_provider = create_ai_provider(provider, provider_api_key, model)
+            print(f"🤖 Initialized {provider} with model: {self.ai_provider.model}")
         except Exception as e:
-            print(f"DuckDuckGo Search Error: {e}")
-            return []
-
-    def _scrape_with_playwright(self, url: str) -> Optional[Dict[str, str]]:
-        """Scrape webpage content using Playwright with improved error handling."""
-        try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(
-                    viewport={'width': 1920, 'height': 1080},
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                )
-                page = context.new_page()
-                
-                # Set longer timeout and wait for network idle
-                page.goto(url, timeout=30000, wait_until='networkidle')
-                page.wait_for_load_state('load')
-                
-                # Wait for content to load
-                page.wait_for_selector('body', timeout=10000)
-                html_content = page.content()
-                
-                # Get page title
-                title = page.title()
-                
-                context.close()
-                browser.close()
-            
-            soup = BeautifulSoup(html_content, "html.parser")
-            
-            # Remove unwanted elements
-            for element in soup.find_all(['script', 'style', 'nav', 'footer']):
-                element.decompose()
-                
-            # Get text from multiple elements
-            text_elements = []
-            for element in soup.find_all(['p', 'h1', 'h2', 'h3', 'article', 'section']):
-                text = element.get_text(strip=True)
-                if text and len(text) > 50:  # Filter out very short snippets
-                    text_elements.append(text)
-            
-            content = "\n\n".join(text_elements)
-            
-            return {
-                "url": url,
-                "title": title,
-                "content": content[:4000]  # Limit content per URL
-            }
-        except Exception as e:
-            print(f"Failed to scrape {url}: {e}")
-            return None
-
-    def _scrape_multiple_urls(self, urls: List[str], max_urls: int = 8) -> List[Dict[str, str]]:
-        """Scrape multiple URLs in parallel."""
-        scraped_data = []
-        
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            future_to_url = {executor.submit(self._scrape_with_playwright, url): url 
-                            for url in urls[:max_urls]}
-            
-            for future in as_completed(future_to_url):
-                result = future.result()
-                if result:
-                    scraped_data.append(result)
-        
-        return scraped_data
-
-    @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=4, max=10))
-    def _summarize_with_gemini(self, content: str, is_individual: bool = False, source_title: str = "") -> str:
-        """Summarize content using Gemini AI with retry mechanism."""
-        if not content:
-            return "No content to summarize."
-        
-        try:
-            if is_individual:
-                prompt = (
-                    f"Please provide a concise and focused summary of the following content from '{source_title}'. "
-                    "Extract the key points, main ideas, and important information in a clear and structured way:\n\n"
-                    f"{content}"
-                )
-            else:
-                prompt = (
-                    "Please provide a comprehensive summary of the following content from multiple sources, "
-                    "highlighting the main points and key information. Organize the summary in a clear structure:\n\n"
-                    f"{content}"
-                )
-            response = self.model.generate_content(prompt)
-            return response.text if response else "Failed to generate summary."
-        except Exception as e:
-            error_msg = str(e)
-            if "429" in error_msg or "quota" in error_msg.lower():
-                print(f"Gemini AI Quota Error: {e}")
-                return f"Summary unavailable due to API quota limits. Original content length: {len(content)} characters."
-            else:
-                print(f"Gemini AI Error: {e}")
-                return "Failed to generate summary due to an error."
-
-    def _generate_individual_summaries(self, scraped_results: List[Dict[str, str]]) -> List[Dict[str, str]]:
-        """Generate individual summaries for each scraped result."""
-        print("Generating individual summaries for each source...")
-        
-        def summarize_single_source(result):
-            summary = self._summarize_with_gemini(result["content"], is_individual=True, source_title=result["title"])
-            return {
-                **result,
-                "individual_summary": summary
-            }
-        
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            future_to_result = {executor.submit(summarize_single_source, result): result 
-                              for result in scraped_results}
-            
-            summarized_results = []
-            for future in as_completed(future_to_result):
-                summarized_results.append(future.result())
-        
-        return summarized_results
-
-    def _save_json_output(self, data: dict, query: str) -> str:
-        """Save JSON output to a file and return filename."""
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        # Clean query for filename
-        clean_query = "".join(c for c in query if c.isalnum() or c in (' ', '-', '_')).rstrip()
-        clean_query = clean_query.replace(' ', '_')[:50]  # Limit filename length
-        
-        filename = f"search_results_{clean_query}_{timestamp}.json"
-        
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            return filename
-        except Exception as e:
-            print(f"Failed to save JSON file: {e}")
-            return ""
+            raise ValueError(f"Failed to initialize {provider} with model {model}: {str(e)}")
     
     def run(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Run the scraper with provided parameters.
+        Run the scraping and summarization process.
         
         Args:
-            params (Dict[str, Any]): Parameters dictionary containing:
-                - query (str): Search query
-                - max_results (int, optional): Maximum number of search results (default: 5)
-                - max_urls (int, optional): Maximum number of URLs to scrape (default: 8)
-                - save_to_file (bool, optional): Whether to save results to JSON file (default: False)
-        
+            params: Configuration parameters including query, max_results, etc.
+            
         Returns:
-            Dict[str, Any]: Structured JSON result containing scraped data and summaries
+            Dictionary with results and metadata
         """
+        # Extract parameters
+        query = params.get("query")
+        if not query:
+            return {"status": "error", "message": "Query is required"}
+        
+        max_results = params.get("max_results", 5)
+        max_urls = params.get("max_urls", 8)
+        save_to_file = params.get("save_to_file", False)
+        
+        print(f"🔍 Starting search for: '{query}'")
+        print(f"🤖 Using AI Provider: {self.provider_name} ({self.ai_provider.model})")
+        
         try:
-            query = params.get("query")
-            if not query:
-                raise ValueError("Query parameter is required")
+            # Search for URLs
+            urls = self._search_urls(query, max_results)
             
-            max_results = params.get("max_results", 5)
-            max_urls = params.get("max_urls", 8)
-            save_to_file = params.get("save_to_file", False)
-            
-            print(f"Searching for: {query}")
-            print("Searching multiple sources...")
-
-            # Search using both engines
-            google_results = self._search_google(query, max_results)
-            duckduckgo_results = self._search_duckduckgo(query, max_results)
-
-            # Combine and deduplicate results
-            all_urls = list(dict.fromkeys(google_results + duckduckgo_results))
-
-            if not all_urls:
+            if not urls:
                 return {
                     "status": "error",
                     "message": "No search results found",
                     "query": query,
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "sources": [],
-                    "summary": ""
+                    "provider": self.provider_name,
+                    "model": self.ai_provider.model
                 }
-
-            print(f"Found {len(all_urls)} unique URLs. Starting content scraping...")
-            scraped_results = self._scrape_multiple_urls(all_urls, max_urls)
-
-            if not scraped_results:
-                return {
-                    "status": "error",
-                    "message": "Failed to scrape content from any of the URLs",
-                    "query": query,
-                    "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "sources": [{"url": url, "scraped": False, "error": "Failed to scrape"} for url in all_urls],
-                    "summary": ""
-                }
-
-            print(f"Successfully scraped {len(scraped_results)} pages")
-
-            # Generate individual summaries for each source
-            scraped_results_with_summaries = self._generate_individual_summaries(scraped_results)
-
-            # Combine content from all sources
-            combined_content = "\n\nSOURCE SEPARATION\n\n".join(
-                f"From {result['title']}:\n{result['content']}"
-                for result in scraped_results_with_summaries
-            )
-
-            print("Generating comprehensive summary...")
-            overall_summary = self._summarize_with_gemini(combined_content)
             
-            # Create structured JSON output
-            structured_result = {
+            # Limit URLs to scrape
+            urls_to_scrape = urls[:max_urls]
+            print(f"📋 Found {len(urls)} total URLs, scraping top {len(urls_to_scrape)}")
+            
+            # Scrape and summarize
+            sources, failed_sources = self._scrape_and_summarize_urls(urls_to_scrape, query)
+            
+            # Generate overall summary
+            if sources:
+                overall_summary = self._generate_overall_summary(sources, query)
+            else:
+                overall_summary = "No content was successfully scraped and summarized."
+            
+            # Prepare result
+            result = {
                 "status": "success",
                 "query": query,
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "total_sources_found": len(all_urls),
-                "successfully_scraped": len(scraped_results_with_summaries),
-                "sources": [
-                    {
-                        "url": result["url"],
-                        "title": result["title"],
-                        "content_preview": result["content"][:200] + "..." if len(result["content"]) > 200 else result["content"],
-                        "individual_summary": result["individual_summary"],
-                        "scraped": True
-                    }
-                    for result in scraped_results_with_summaries
-                ],
-                "failed_sources": [
-                    {"url": url, "scraped": False}
-                    for url in all_urls
-                    if url not in [r["url"] for r in scraped_results_with_summaries]
-                ],
+                "provider": self.provider_name,
+                "model": self.ai_provider.model,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "total_sources_found": len(urls),
+                "successfully_scraped": len(sources),
+                "sources": sources,
+                "failed_sources": failed_sources,
                 "overall_summary": overall_summary,
                 "metadata": {
-                    "google_results_count": len(google_results),
-                    "duckduckgo_results_count": len(duckduckgo_results),
-                    "total_unique_urls": len(all_urls),
-                    "processing_time": "Real-time processing completed"
+                    "provider_info": {
+                        "provider": self.provider_name,
+                        "model": self.ai_provider.model,
+                        "provider_type": self.ai_provider.__class__.__name__.replace("Provider", "")
+                    },
+                    "processing_time": "Real-time processing completed",
+                    "success_rate": f"{(len(sources) / len(urls_to_scrape)) * 100:.0f}%" if urls_to_scrape else "0%"
                 }
             }
             
             # Save to file if requested
             if save_to_file:
-                filename = self._save_json_output(structured_result, query)
-                if filename:
-                    structured_result["saved_file"] = filename
-                    print(f"Results saved to: {filename}")
+                filename = self._save_results(result)
+                result["metadata"]["saved_filename"] = filename
+                print(f"💾 Results saved to: {filename}")
             
-            return structured_result
-
-        except KeyboardInterrupt:
-            return {
-                "status": "cancelled",
-                "message": "Operation cancelled by user",
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
-            }
+            return result
+            
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"An unexpected error occurred: {str(e)}",
-                "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+                "message": f"Processing failed: {str(e)}",
+                "query": query,
+                "provider": self.provider_name,
+                "model": self.ai_provider.model,
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
+    
+    def _search_urls(self, query: str, max_results: int) -> List[str]:
+        """Search for URLs using Google and DuckDuckGo."""
+        urls = []
+        
+        # Google Search via Serper
+        try:
+            google_urls = self._google_search(query, max_results)
+            urls.extend(google_urls)
+            print(f"📍 Google: Found {len(google_urls)} results")
+        except Exception as e:
+            print()
+    
+        # DuckDuckGo Search
+        try:
+            ddg_urls = self._duckduckgo_search(query, max_results)
+            urls.extend(ddg_urls)
+            print(f"📍 DuckDuckGo: Found {len(ddg_urls)} results")
+        except Exception as e:
+            print()
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_urls = []
+        for url in urls:
+            if url not in seen:
+                seen.add(url)
+                unique_urls.append(url)
+        
+        return unique_urls
+    
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+    def _google_search(self, query: str, max_results: int) -> List[str]:
+        """Search Google via Serper API."""
+        url = "https://google.serper.dev/search"
+        
+        payload = json.dumps({
+            "q": query,
+            "num": max_results
+        })
+        
+        headers = {
+            'X-API-KEY': self.serper_api_key,
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(url, headers=headers, data=payload, timeout=10)
+        response.raise_for_status()
+        
+        data = response.json()
+        organic_results = data.get("organic", [])
+        
+        return [result.get("link", "") for result in organic_results if result.get("link")]
+    
+    def _duckduckgo_search(self, query: str, max_results: int) -> List[str]:
+        """Search DuckDuckGo."""
+        try:
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=max_results))
+                return [result.get("href", "") for result in results if result.get("href")]
+        except Exception as e:
+            print(f"DuckDuckGo search error: {str(e)}")
+            return []
+    
+    def _scrape_and_summarize_urls(self, urls: List[str], query: str) -> tuple:
+        """Scrape URLs and generate summaries concurrently."""
+        sources = []
+        failed_sources = []
+        
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            future_to_url = {
+                executor.submit(self._scrape_and_summarize_single, url, query): url 
+                for url in urls
+            }
+            
+            for future in as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    result = future.result()
+                    if result:
+                        sources.append(result)
+                        print(f"✅ Scraped: {url}")
+                    else:
+                        failed_sources.append({"url": url, "scraped": False})
+                        print(f"❌ Failed: {url}")
+                except Exception as e:
+                    failed_sources.append({"url": url, "scraped": False, "error": str(e)})
+                    print(f"💥 Error scraping {url}: {str(e)}")
+        
+        return sources, failed_sources
+    
+    def _scrape_and_summarize_single(self, url: str, query: str) -> Optional[Dict]:
+        """Scrape a single URL and generate summary."""
+        try:
+            # Scrape content
+            content = self._scrape_url_content(url)
+            if not content or len(content.strip()) < 100:
+                return None
+            
+            # Generate summary
+            summary = self.ai_provider.generate_summary(content, query)
+            
+            return {
+                "url": url,
+                "title": self._extract_title(content),
+                "content_preview": content[:500] + "..." if len(content) > 500 else content,
+                "individual_summary": summary,
+                "scraped": True
+            }
+            
+        except Exception as e:
+            print(f"Error processing {url}: {str(e)}")
+            return None
+    
+    def _scrape_url_content(self, url: str) -> str:
+        """Scrape content from URL using Playwright."""
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
+                page.set_default_timeout(30000)
+                
+                page.goto(url, wait_until='domcontentloaded')
+                page.wait_for_timeout(2000)
+                
+                content = page.content()
+                browser.close()
+                
+                # Parse with BeautifulSoup
+                soup = BeautifulSoup(content, 'html.parser')
+                
+                # Remove unwanted elements
+                for element in soup(['script', 'style', 'nav', 'footer', 'header']):
+                    element.decompose()
+                
+                # Extract text
+                text = soup.get_text()
+                
+                # Clean up
+                lines = (line.strip() for line in text.splitlines())
+                text = ' '.join(line for line in lines if line)
+                
+                # Limit content size
+                return text[:8000] if len(text) > 8000 else text
+                
+        except Exception as e:
+            raise Exception(f"Failed to scrape {url}: {str(e)}")
+    
+    def _extract_title(self, content: str) -> str:
+        """Extract title from content."""
+        soup = BeautifulSoup(content, 'html.parser')
+        title_tag = soup.find('title')
+        return title_tag.get_text().strip() if title_tag else "No title found"
+    
+    def _generate_overall_summary(self, sources: List[Dict], query: str) -> str:
+        """Generate overall summary from all sources."""
+        combined_summaries = "\n\n".join([
+            f"Source {i+1}: {source['individual_summary']}" 
+            for i, source in enumerate(sources)
+        ])
+        
+        overall_prompt = f"""
+        Based on the following individual summaries related to "{query}", create a comprehensive overall summary:
+        
+        {combined_summaries[:6000]}
+        
+        Provide a cohesive summary that synthesizes the main themes, key insights, and important information across all sources.
+        """
+        
+        return self.ai_provider.generate_summary(overall_prompt, f"Overall summary for: {query}")
+    
+    def _save_results(self, results: Dict) -> str:
+        """Save results to JSON file."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        query_safe = "".join(c for c in results["query"] if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        query_safe = query_safe.replace(' ', '_')[:50]
+        
+        filename = f"scraper_results_{query_safe}_{timestamp}.json"
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(results, f, indent=2, ensure_ascii=False)
+        
+        return filename
+    
+    def get_provider_info(self) -> Dict[str, Any]:
+        """Get information about current provider and model."""
+        return {
+            "provider": self.provider_name,
+            "model": self.ai_provider.model,
+            "supported_providers": get_supported_providers()
+        }

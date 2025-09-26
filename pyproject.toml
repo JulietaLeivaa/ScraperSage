@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ScraperSage"
-version = "1.0.0"
+version = "1.2.2"
 authors = [
     {name = "Akil", email = "akil@example.com"},
 ]
-description = "A comprehensive web scraping and content summarization library with AI-powered features"
+description = "A comprehensive web scraping and content summarization library with explicit AI provider and model selection (Gemini, OpenAI, OpenRouter, DeepSeek)"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
@@ -26,14 +26,16 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-keywords = ["web scraping", "content summarization", "search", "AI", "playwright", "gemini"]
+keywords = ["web scraping", "content summarization", "search", "AI", "playwright", "gemini", "openai", "openrouter", "deepseek"]
 dependencies = [
     "requests",
     "ddgs",
     "playwright",
     "google-generativeai",
+    "openai",
     "beautifulsoup4",
     "tenacity",
+    "httpx",
 ]
 
 [project.urls]

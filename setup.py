@@ -23,10 +23,10 @@ def read_requirements():
 
 setup(
     name="ScraperSage",
-    version="1.0.0",
+    version="1.2.2",
     author="Akil",
     author_email="akilaskarali@gmail.com",  # Replace with your actual email
-    description="A comprehensive web scraping and content summarization library with AI-powered features",
+    description="A comprehensive web scraping and content summarization library with explicit AI provider and model selection (Gemini, OpenAI, OpenRouter, DeepSeek)",
     long_description=read_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/akillabs/ScraperSage",  # Replace with your actual repo URL
@@ -47,7 +47,7 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=read_requirements(),
-    keywords="web scraping, content summarization, search, AI, playwright, gemini",
+    keywords="web scraping, content summarization, search, AI, playwright, gemini, openai, openrouter, deepseek",
     project_urls={
         "Bug Reports": "https://github.com/akillabs/ScraperSage/issues",
         "Source": "https://github.com/akillabs/ScraperSage",
