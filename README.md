@@ -2,8 +2,6 @@
 
 A comprehensive web scraping and content summarization library that combines Google/DuckDuckGo search with web scraping and AI-powered summarization using multiple providers: **Gemini**, **OpenAI**, **OpenRouter**, and **DeepSeek**.
 
-⚠️ **Model specification is now required** - No default models to ensure explicit choice.
-
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![PyPI Version](https://img.shields.io/pypi/v/ScraperSage.svg)](https://pypi.org/project/ScraperSage/)
